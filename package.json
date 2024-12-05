@@ -1,0 +1,16 @@
+{
+  "name": "burntpix-refiner",
+  "version": "1.0.0",
+  "description": "script to refine burntpix NFT on LUKSO",
+  "main": "./refine.ts",
+  "scripts": {
+    "refine": "ts-node refine.ts [burnt pix ID] [number of transactions]"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "dotenv": "^16.4.5",
+    "ethers": "^6.11.1",
+    "ts-node": "^10.9.2"
+  }
+}
