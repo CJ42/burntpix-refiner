@@ -2,7 +2,9 @@
 
 ![Burntpix refiner image](./burntpix-refiner-image.webp)
 
-Simple automated script to refine your favourite [burntpix](http://burntpix.com) on LUKSO! _(set to 500 iterations with a gas limit of 15 millions gas units)._
+Simple automated script to refine your favourite [burntpix](http://burntpix.com) on LUKSO! 
+
+> _Set to 500 iterations with a gas limit of 15 millions gas units._
 
 ## How to use it?
 
@@ -26,9 +28,9 @@ PRIVATE_KEY=""
 ```
 
 
-4. Run the following command with the right parameters.
+4. Run the following command with the right parameters. You can configure the gas price as you want in gwei.
 
 
 ```
-npm run refine --burntpix-id=[burnt pix ID] --tx-count=[number of transactions]
+npm run refine --burntpix-id=[burnt pix ID] --tx-count=[number of transactions] --gas-price=0.5
 ```

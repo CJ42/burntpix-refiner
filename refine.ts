@@ -23,6 +23,7 @@ const main = async () => {
 
   const tokenId = process.env.npm_config_burntpix_id;
   const numberOfTx = process.env.npm_config_tx_count;
+  const gasPrice = process.env.npm_config_gas_price;
 
   if (tokenId == undefined || numberOfTx == undefined) {
     console.error(`❌ Invalid parameters provided \n - burntpix-id=${tokenId} \n - tx-count=${numberOfTx}`)
@@ -50,9 +51,10 @@ const main = async () => {
   let nonce = await provider.getTransactionCount(signer.address);
 
   for (let i = 0; i < parseInt(numberOfTx, 10); i++) {
-    let tx = await contract.refine(tokenId, "500", {
-      gasLimit: 15_000_000,
+    let tx = await contract.refine(tokenId, "1000", {
+      gasLimit: 20_000_000,
       nonce,
+      gasPrice: ethers.parseUnits(`${gasPrice}`, "gwei")
     });
     nonce++;
 
@@ -62,7 +64,7 @@ const main = async () => {
 
   console.log("✅ Done!") 
   console.log("- Total nb of transactions = ", numberOfTx);
-  console.log("- Total nb of iterations = ", parseInt(numberOfTx, 10) * 500);
+  console.log("- Total nb of iterations = ", parseInt(numberOfTx, 10) * 1000);
 };
 
 main();
