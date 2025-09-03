@@ -19,10 +19,18 @@ let spinnerIndex = 0;
 let isRefining = false;
 let spinnerInterval: NodeJS.Timeout | null = null;
 let spinnerLine = 0;
+let flameIndex = 0;
+let flameDirection = 1; // 1 for growing, -1 for shrinking
 
 // Function to get current spinner frame
 const getSpinner = () => {
   return spinnerFrames[spinnerIndex];
+};
+
+// Function to get flame emojis
+const getFlames = () => {
+  const flames = ['🔥'.repeat(flameIndex)];
+  return flames.join('');
 };
 
 // Function to start spinner
@@ -30,11 +38,20 @@ const startSpinner = () => {
   isRefining = true;
   spinnerInterval = setInterval(() => {
     spinnerIndex = (spinnerIndex + 1) % spinnerFrames.length;
+    
+    // Update flame animation
+    flameIndex += flameDirection;
+    if (flameIndex >= 20) {
+      flameDirection = -1;
+    } else if (flameIndex <= 0) {
+      flameDirection = 1;
+    }
+    
     // Update the spinner line in place
     if (spinnerLine > 0) {
       process.stdout.cursorTo(0, spinnerLine);
       process.stdout.clearLine(0);
-      process.stdout.write(`${getSpinner()} Refining in progress...`);
+      process.stdout.write(`${getSpinner()} Refining in progress... ${getFlames()}`);
     }
   }, 100);
 };
@@ -244,7 +261,7 @@ const main = async () => {
   // Stop the spinner when done
   stopSpinner();
 
-  console.log("\n", "-".repeat(100));
+  // print summary
   console.log("✅ BurntPix Refining Completed") 
   console.log("🔀 Total nb of transactions = ", numberOfTx);
   console.log("🔄 Total nb of iterations = ", parseInt(numberOfTx, 10) * parseInt(iterations));

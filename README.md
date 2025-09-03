@@ -53,6 +53,9 @@ npm run refine --burntpix-id=[burnt pix ID] --gas-price=0.5
 - [ ] Retrieve the iterations and cumulated gas of the burntpix by calling the burntpix id using the `iterations()` and `gasUsed()` view function.
 See the Solidity code of `fractal.sol` or in `registry.sol` contract.
 https://explorer.execution.mainnet.lukso.network/address/0x3983151E0442906000DAb83c8b1cF3f2D2535F82?tab=contract_code
+- [ ] add in refining summary total number of LYX spent by refiner wallet
+
+**Later:**
 - [ ] Improve script efficiency by re-introducing the previously put `delay()` function with the timeout (dispatching a tx every second). Introduce with this a `--batch` flag (default to `10` tx dispatched to the network every 0.1 seconds)
 - [ ] Improve codebase structure by putting everything in a `src/` folder broken down across multiple files
 
