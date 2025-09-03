@@ -2,9 +2,9 @@
 
 ![Burntpix refiner image](./img/burntpix-refiner-image.webp)
 
-Simple automated script to refine your favourite [burntpix](http://burntpix.com) on LUKSO! 
+Automated script to refine your favourite [burntpix](http://burntpix.com) on LUKSO! See CLI options below 👇🏻
 
-> _Set to 500 iterations with a gas limit of 30 millions gas units._
+> _Set with a gas limit of 30 millions gas units._
 
 ## How to use it?
 
@@ -27,23 +27,20 @@ RPC_URL="https://rpc.mainnet.lukso.network"
 PRIVATE_KEY=""
 ```
 
-
-4. Run the following command with the right parameters. You can configure the gas price as you want in gwei via the `--gas-price` flag.
+4. Refine your BurntPix with the command below. You can also use the options below for more fine grained configurations.
 
 
 ```
-npm run refine --burntpix-id=[burnt pix ID] \
-    --tx-count=[number of transactions] \
-    --gas-price=0.5
+npm run refine --burntpix-id=[burnt pix ID] --gas-price=0.5
 ```
 
 ## Options
 
 ```bash
---burntpix-id  # `bytes32` token ID of the burnt pix to refine (left padded with 12 x `0x00` bytes)
---tx-count     # total number of refining tx to run
---gas-price    # configure gas price per refining tx (in gwei)
---iterations   # number of iterations per refining tx
+--burntpix-id  # [Required] `bytes32` token ID of the burnt pix to refine (left padded with 12 x `0x00` bytes)
+--gas-price    # [Required] configure gas price per refining tx (in gwei)
+--tx-count     # [Optional] total number of refining tx to run (default = 100)
+--iterations   # [Optional] number of iterations per refining tx (default = 1,000)
 ```
 
 # 🫡 Upcoming features

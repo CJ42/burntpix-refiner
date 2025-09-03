@@ -78,7 +78,7 @@ function getCLIParams(): string[] {
   // }
 
   if (numberOfTx == undefined) {
-    numberOfTx = "10";
+    numberOfTx = "100";
   }
 
   if (iterations == undefined) {
