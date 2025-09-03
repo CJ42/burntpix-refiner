@@ -1,4 +1,4 @@
-# Simple Burntpix refining script
+# Burntpix Refining script
 
 ![Burntpix refiner image](./burntpix-refiner-image.webp)
 
@@ -36,3 +36,10 @@ npm run refine --burntpix-id=[burnt pix ID] \
     --tx-count=[number of transactions] \
     --gas-price=0.5
 ```
+
+# Upcoming features:
+
+- [ ] styling and ASCII art in the terminal 💅🏻
+- [ ] new `--iterations` flag 🔄
+- [ ] display new total iterations of the burntpix ID for each row in the table
+- [ ] improve error handling by simulating tx and if failed, return error (prevent dispatching and wasting balance)

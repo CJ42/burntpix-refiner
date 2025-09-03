@@ -13,8 +13,6 @@ const wallet = new Wallet(process.env.PRIVATE_KEY as string);
 
 const signer = wallet.connect(provider);
 
-const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
-
 // Spinner animation frames
 const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 let spinnerIndex = 0;
@@ -155,8 +153,6 @@ const main = async () => {
 
     // Display updated header and growing table
     displayHeaderAndTable(tokenId, numberOfTx, signer.address, gasPrice, balance, transactionsData);
-
-    await delay(1000);
   }
 
   // Stop the spinner when done
