@@ -1,6 +1,6 @@
 {
   "name": "burntpix-refiner",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "script to refine burntpix NFT on LUKSO",
   "main": "./refine.ts",
   "scripts": {

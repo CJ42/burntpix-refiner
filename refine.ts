@@ -125,7 +125,6 @@ const displayHeader = (tokenId: string, numberOfTx: string, signerAddress: strin
   console.log("💵 Initial wallet balance: ", ethers.formatEther(initialBalance), "LYX");
   console.log("⛽️ Gas Price used (in gwei): ", gasPrice, "gwei");
   console.log("🔄 Nb of iterations / tx: ", iterations);
-  console.log("-".repeat(100));
 };
 
 const displayTable = (transactionsData: any[]) => {
