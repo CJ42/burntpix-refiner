@@ -4,7 +4,7 @@
 
 Simple automated script to refine your favourite [burntpix](http://burntpix.com) on LUKSO! 
 
-> _Set to 500 iterations with a gas limit of 15 millions gas units._
+> _Set to 500 iterations with a gas limit of 30 millions gas units._
 
 ## How to use it?
 
@@ -37,9 +37,29 @@ npm run refine --burntpix-id=[burnt pix ID] \
     --gas-price=0.5
 ```
 
-# Upcoming features:
+## Options
+
+```bash
+--burntpix-id  # `bytes32` token ID of the burnt pix to refine (left padded with 12 x `0x00` bytes)
+--tx-count     # total number of refining tx to run
+--gas-price    # configure gas price per refining tx (in gwei)
+--iterations   # number of iterations per refining tx
+```
+
+# 🫡 Upcoming features
 
 - [ ] styling and ASCII art in the terminal 💅🏻
-- [ ] new `--iterations` flag 🔄
-- [ ] display new total iterations of the burntpix ID for each row in the table
-- [ ] improve error handling by simulating tx and if failed, return error (prevent dispatching and wasting balance)
+- [x] new `--iterations` flag 🔄
+- [x] display new total iterations of the burntpix ID for each row in the table
+- [x] improve error handling by simulating tx and if failed, return error (prevent dispatching and wasting balance)
+- [ ] make `--gas-price` flag optional, using default network gas price from network if not provided
+- [ ] Retrieve the iterations and cumulated gas of the burntpix by calling the burntpix id using the `iterations()` and `gasUsed()` view function.
+See the Solidity code of `fractal.sol` or in `registry.sol` contract.
+https://explorer.execution.mainnet.lukso.network/address/0x3983151E0442906000DAb83c8b1cF3f2D2535F82?tab=contract_code
+- [ ] Improve script efficiency by re-introducing the previously put `delay()` function with the timeout (dispatching a tx every second). Introduce with this a `--batch` flag (default to `10` tx dispatched to the network every 0.1 seconds)
+- [ ] Improve codebase structure by putting everything in a `src/` folder broken down across multiple files
+
+# 🛣️ Future roadmap
+
+- [ ] Interactive CLI mode
+  - [ ] Start / Stop
