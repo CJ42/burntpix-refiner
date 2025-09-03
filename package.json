@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@erc725/erc725.js": "^0.28.1",
     "dotenv": "^16.4.5",
     "ethers": "^6.11.1",
     "ts-node": "^10.9.2"

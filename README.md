@@ -1,6 +1,6 @@
 # Burntpix Refining script
 
-![Burntpix refiner image](./burntpix-refiner-image.webp)
+![Burntpix refiner image](./img/burntpix-refiner-image.webp)
 
 Simple automated script to refine your favourite [burntpix](http://burntpix.com) on LUKSO! 
 

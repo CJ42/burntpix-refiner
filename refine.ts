@@ -1,4 +1,5 @@
 import { JsonRpcProvider, Wallet, ethers } from "ethers";
+import { decodeDataSourceWithHash } from "@erc725/erc725.js"
 
 import * as dotenv from "dotenv";
 dotenv.config({ path: ".env" });
@@ -10,7 +11,6 @@ const BURNT_PIX_REGISTRY = "0x3983151E0442906000DAb83c8b1cF3f2D2535F82";
 
 const provider = new JsonRpcProvider(RPC_URL);
 const wallet = new Wallet(process.env.PRIVATE_KEY as string);
-
 const signer = wallet.connect(provider);
 
 // Spinner animation frames
@@ -48,34 +48,89 @@ const stopSpinner = () => {
   }
 };
 
+// Get the arguments from the command line
+function getCLIParams(): string[] {
+  // required params
+  const tokenId = process.env.npm_config_burntpix_id;
+  
+  // optional params
+  let numberOfTx = process.env.npm_config_tx_count;
+  let gasPrice = process.env.npm_config_gas_price; // TODO see below
+  let iterations = process.env.npm_config_iterations;
+
+  if (tokenId == undefined || gasPrice == undefined) {
+    console.error(`❌ Invalid parameters provided \n - burntpix-id=${tokenId} \n - tx-count=${numberOfTx}`)
+    return [];
+  }
+
+  // if no params provided, fallback to default gas price of the network
+  // if (gasPrice == undefined) {
+  //   const networkGas = await provider.getFeeData()
+  //   const gasPriceResult = networkGas.gasPrice;
+
+  //   if (gasPriceResult == null) {
+  //     throw new Error("Could not fetch default gas price from the network. Please provide a `--gas-price` flag")
+  //   }
+
+  //   console.log("result: ", gasPriceResult)
+  //   throw new Error("aborting script...")
+  //   return []
+  // }
+
+  if (numberOfTx == undefined) {
+    numberOfTx = "10";
+  }
+
+  if (iterations == undefined) {
+    iterations = "1000"
+  }
+
+  if (parseInt(iterations) > 2000) {
+    console.error(`❌ Invalid \`--iterations\` flag value. Max allowed = 1000, provided: ${iterations}`)
+    return []
+  }
+
+  if (tokenId.length !== 66) {
+    console.error("❌ Invalid parameter `burntpix-id` provided: must be a 32 bytes long tokenId identifier (64 characters prefixed with 0x)")
+    return []
+  }
+
+  return [ tokenId, numberOfTx, gasPrice, iterations ]
+}
+
 // Function to display header and table
-const displayHeaderAndTable = (tokenId: string, numberOfTx: string, signerAddress: string, gasPrice: string, initialBalance: bigint, transactionsData: any[]) => {
+const displayHeader = (tokenId: string, numberOfTx: string, signerAddress: string, gasPrice: string, iterations: string, initialBalance: bigint) => {
   console.clear();
   console.log("-".repeat(100));
-  console.log("🔀 Sending", numberOfTx, "tx for 🖼️ BurntPix ID: ", tokenId);
+  console.log("🖼️ BurntPix ID: ", tokenId)
+  console.log("🔀 Number of tx: ", numberOfTx);
   console.log("🔑 Refiner wallet address: ", signerAddress);
   console.log("💵 Initial wallet balance: ", ethers.formatEther(initialBalance), "LYX");
   console.log("⛽️ Gas Price used (in gwei): ", gasPrice, "gwei");
+  console.log("🔄 Nb of iterations / tx: ", iterations);
   console.log("-".repeat(100));
-  
+};
+
+const displayTable = (transactionsData: any[]) => {
   if (transactionsData.length > 0) {
     // Create table data with Operation Nb as first property
     const tableData = transactionsData.map((tx, index) => ({
+      "BurntPix Total Iterations": tx["BurntPix Total Iterations"],
+      // "BurntPix Gas Consumed": tx["BurntPix Gas Consumed"],
+      "Tx Gas Used": tx["Tx Gas Used"],
+      "Refining Fee": tx["Refining Fee"],
       "Transaction Hash": tx["Transaction Hash"],
-      "Block Number": tx["Block Number"],
-      "Gas Used": tx["Gas Used"],
-      "Refining Fee (LYX)": tx["Refining Fee (LYX)"],
-      "Refiner Wallet Balance (LYX)": tx["Refiner Wallet Balance (LYX)"]
+      "Refiner Wallet Balance": tx["Refiner Wallet Balance"]
     }));
     
     // Use console.table with specific columns to show only what we want
-    console.table(tableData, ["Transaction Hash", "Block Number", "Gas Used", "Refining Fee (LYX)", "Refiner Wallet Balance (LYX)"]);
+    console.table(tableData, ["BurntPix Total Iterations", "Tx Gas Used", "Refining Fee", "Transaction Hash", "Refiner Wallet Balance"]);
   }
   
   if (isRefining) {
     spinnerLine = process.stdout.rows ? process.stdout.rows - 1 : 0;
   }
-};
+}
 
 const main = async () => {
   if (process.argv.length <= 3) {
@@ -83,48 +138,76 @@ const main = async () => {
     process.exit(1);
   }
 
-  // Get the arguments from the command line
-  const tokenId = process.env.npm_config_burntpix_id;
-  const numberOfTx = process.env.npm_config_tx_count;
-  const gasPrice = process.env.npm_config_gas_price;
+  const cliParams = await getCLIParams();
 
-  if (tokenId == undefined || numberOfTx == undefined || gasPrice == undefined) {
-    console.error(`❌ Invalid parameters provided \n - burntpix-id=${tokenId} \n - tx-count=${numberOfTx}`)
-    return;
-  }
-
-  if (tokenId.length !== 66) {
-    console.error("❌ Invalid parameter `burntpix-id` provided: must be a 32 bytes long tokenId identifier (64 characters prefixed with 0x)")
-    return
-  }
+  if (cliParams.length == 0) return;
+  const [ tokenId, numberOfTx, gasPrice, iterations ] = cliParams;
 
   const balance = await provider.getBalance(signer.address);
+  let nonce = await provider.getTransactionCount(signer.address);
+  const gasPriceInWei = ethers.parseUnits(`${gasPrice}`, "gwei");
 
   const contract = new ethers.Contract(
     BURNT_PIX_REGISTRY,
-    ["function refine(bytes32 tokenId, uint256 iters) external"],
+    [
+      "function refine(bytes32 tokenId, uint256 iters) external",
+      "function getDataForTokenId(bytes32 tokenId, bytes32 dataKey) external view returns (bytes)"
+    ],
     signer
   );
 
-  let nonce = await provider.getTransactionCount(signer.address);
-  const gasPriceInWei = ethers.parseUnits(`${gasPrice}`, "gwei");
+  // fetch the metadata of the burntPix to see the number of iterations
+  // get the starting number of iterations for the burntpix
+  // TODO: refactor to use `iterations()` function on the fractal
+  const burntPixMetadataValue = await contract.getDataForTokenId.staticCall(
+    tokenId,
+    "0x9afb95cacc9f95858ec44aa8c3b685511002e30ae54415823f406128b85b238e" // LSP4Metadata
+  );
+
+  const decodedValue = decodeDataSourceWithHash(burntPixMetadataValue);
+  const json = JSON.parse(decodedValue.url.replace('data:application/json;charset=UTF-8,', ""))
+  const { LSP4Metadata: {attributes}} = json as any
+
+  // TODO: add cumulated gas consumed by the burntpix
+  const startingIterationsObject = (attributes as any[]).find(({ key }) => key == "Iterations")
+  const startingIterations = startingIterationsObject.value
 
   // Array to store all transaction data
   const transactionsData: any[] = [];
   let currentBalance = balance;
 
-  // Display initial header
-  displayHeaderAndTable(tokenId, numberOfTx, signer.address, gasPrice, balance, transactionsData);
-
-  // Start the spinner
+  // Display initial header + spinner
+  displayHeader(tokenId, numberOfTx, signer.address, gasPrice, iterations, balance);
   startSpinner();
 
   for (let i = 0; i < parseInt(numberOfTx, 10); i++) {
     // Show refining in progress with continuous spinner
-    displayHeaderAndTable(tokenId, numberOfTx, signer.address, gasPrice, balance, transactionsData);
+    displayHeader(tokenId, numberOfTx, signer.address, gasPrice, iterations, balance);
+    displayTable(transactionsData);
+
+    try {
+      const dryRun = await contract.refine.staticCall(tokenId, iterations, {
+        gasLimit: 30_000_000, 
+        nonce,
+        gasPrice: gasPriceInWei
+      });
+      // console.log(dryRun)
+      process.stdout.cursorTo(1);
+      process.stdout.write(`${getSpinner()} Dispatching Refining transaction #${i + 1} - Hash = ...`)
+    } catch (error) {
+      stopSpinner()
+      console.error("Could not refine tx. See error below:");
+
+      const { info: {error: {code: errorCode} }} = error as any
+      if (errorCode == -32000) {
+        console.error("\t\t\t\t ↳ Out-of-refining-funds: not enough funds left in refining wallet")
+      }
+      console.error("Killing process...");
+      return;
+    }
     
-    let tx = await contract.refine(tokenId, "1000", {
-      gasLimit: 15_000_000,
+    const tx = await contract.refine(tokenId, iterations, {
+      gasLimit: 30_000_000, 
       nonce,
       gasPrice: gasPriceInWei
     });
@@ -132,7 +215,7 @@ const main = async () => {
 
     const receipt = await tx.wait()
 
-    const { hash: txHash, blockNumber, gasUsed } = receipt
+    const { hash: txHash, gasUsed } = receipt
 
     // Calculate refining fee in LYX
     const refiningFeeInWei = gasUsed * gasPriceInWei;
@@ -142,17 +225,20 @@ const main = async () => {
     currentBalance = currentBalance - refiningFeeInWei;
     const currentBalanceInLYX = ethers.formatEther(currentBalance);
 
+    // TODO: add total gas consumed
+    // BUG it shows as last digits 25 instead of 24
     // Add transaction data to array
     transactionsData.push({
+      "BurntPix Total Iterations": startingIterations + (parseInt(iterations) * i + 1),
+      "Tx Gas Used": gasUsed.toString(),
+      "Refining Fee": parseFloat(refiningFeeInLYX).toFixed(6) + " LYX",
       "Transaction Hash": txHash,
-      "Block Number": blockNumber,
-      "Gas Used": gasUsed.toString(),
-      "Refining Fee (LYX)": parseFloat(refiningFeeInLYX).toFixed(6),
-      "Refiner Wallet Balance (LYX)": parseFloat(currentBalanceInLYX).toFixed(6)
+      "Refiner Wallet Balance": parseFloat(currentBalanceInLYX).toFixed(6) + " LYX"
     });
 
     // Display updated header and growing table
-    displayHeaderAndTable(tokenId, numberOfTx, signer.address, gasPrice, balance, transactionsData);
+    displayHeader(tokenId, numberOfTx, signer.address, gasPrice, iterations, balance);
+    displayTable(transactionsData);
   }
 
   // Stop the spinner when done
@@ -160,9 +246,9 @@ const main = async () => {
 
   console.log("\n", "-".repeat(100));
   console.log("✅ BurntPix Refining Completed") 
-  console.log("- Total nb of transactions = ", numberOfTx);
-  console.log("- Total nb of iterations = ", parseInt(numberOfTx, 10) * 1000);
-  console.log("- Final wallet balance = ", ethers.formatEther(currentBalance), "LYX");
+  console.log("🔀 Total nb of transactions = ", numberOfTx);
+  console.log("🔄 Total nb of iterations = ", parseInt(numberOfTx, 10) * parseInt(iterations));
+  console.log("💵 Final refiner wallet balance = ", ethers.formatEther(currentBalance), "LYX");
 };
 
 main();
