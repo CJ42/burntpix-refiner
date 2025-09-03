@@ -28,9 +28,11 @@ PRIVATE_KEY=""
 ```
 
 
-4. Run the following command with the right parameters. You can configure the gas price as you want in gwei.
+4. Run the following command with the right parameters. You can configure the gas price as you want in gwei via the `--gas-price` flag.
 
 
 ```
-npm run refine --burntpix-id=[burnt pix ID] --tx-count=[number of transactions] --gas-price=0.5
+npm run refine --burntpix-id=[burnt pix ID] \
+    --tx-count=[number of transactions] \
+    --gas-price=0.5
 ```
