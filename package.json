@@ -13,5 +13,8 @@
     "dotenv": "^16.4.5",
     "ethers": "^6.11.1",
     "ts-node": "^10.9.2"
+  },
+  "dependencies": {
+    "console-table-without-index": "^0.1.1"
   }
 }
