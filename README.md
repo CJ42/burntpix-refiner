@@ -59,13 +59,17 @@ npm run refine --burntpix-id=[burnt pix ID] --gas-price=0.5
 
 **Later:**
 
-- [ ] Improve script efficiency by re-introducing the previously put `delay()` function with the timeout (dispatching a tx every second). Introduce with this a `--batch` flag (default to `10` tx dispatched to the network every 0.1 seconds)
 - [ ] Improve codebase structure by putting everything in a `src/` folder broken down across multiple files
+  - [ ] File for spinner frame
+  - [ ] File for getting CLI params
+  - [x] File for table display
+  - [ ] File for refining
 
 # 🛣️ Future roadmap
 
 - [ ] Interactive CLI mode
   - [ ] Start / Stop
+  - [ ] Pause / Continue
 - [ ] Being able to pass multiple refiner private keys + refine multiple BurntPix tokenId at once from a single terminal shell (instead of one only)
 - [ ] Save refining tx in a JSON file (or a Markdown table)
 - [ ] Add iteration goals

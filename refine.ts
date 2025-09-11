@@ -4,6 +4,9 @@ import { decodeDataSourceWithHash } from "@erc725/erc725.js";
 import * as dotenv from "dotenv";
 dotenv.config({ path: ".env" });
 
+import { getCLIParams } from "./src/cli";
+import { getFlames, getSpinner, SPINNER_FRAMES } from "./src/animations";
+
 const RPC_URL = process.env.RPC_URL as string;
 
 // https://explorer.execution.mainnet.lukso.network/address/0x3983151E0442906000DAb83c8b1cF3f2D2535F82?tab=contract
@@ -14,36 +17,23 @@ const wallet = new Wallet(process.env.PRIVATE_KEY as string);
 const signer = wallet.connect(provider);
 
 // Spinner animation frames
-const spinnerFrames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 let spinnerIndex = 0;
 let isRefining = false;
 let spinnerInterval: NodeJS.Timeout | null = null;
 let spinnerLine = 0;
-let flameIndex = 0;
+let flameCount = 0;
 let flameDirection = 1; // 1 for growing, -1 for shrinking
-
-// Function to get current spinner frame
-const getSpinner = () => {
-  return spinnerFrames[spinnerIndex];
-};
-
-// Function to get flame emojis
-const getFlames = () => {
-  const flames = ["🔥".repeat(flameIndex)];
-  return flames.join("");
-};
 
 // Function to start spinner
 const startSpinner = () => {
-  isRefining = true;
   spinnerInterval = setInterval(() => {
-    spinnerIndex = (spinnerIndex + 1) % spinnerFrames.length;
+    spinnerIndex = (spinnerIndex + 1) % SPINNER_FRAMES.length;
 
     // Update flame animation
-    flameIndex += flameDirection;
-    if (flameIndex >= 20) {
+    flameCount += flameDirection;
+    if (flameCount >= 20) {
       flameDirection = -1;
-    } else if (flameIndex <= 0) {
+    } else if (flameCount <= 0) {
       flameDirection = 1;
     }
 
@@ -52,7 +42,9 @@ const startSpinner = () => {
       process.stdout.cursorTo(0, spinnerLine);
       process.stdout.clearLine(0);
       process.stdout.write(
-        `${getSpinner()} Refining in progress... ${getFlames()}`
+        `${getSpinner(spinnerIndex)} Refining in progress... ${getFlames(
+          flameCount
+        )}`
       );
     }
   }, 100);
@@ -60,73 +52,11 @@ const startSpinner = () => {
 
 // Function to stop spinner
 const stopSpinner = () => {
-  isRefining = false;
   if (spinnerInterval) {
     clearInterval(spinnerInterval);
     spinnerInterval = null;
   }
 };
-
-// Get the arguments from the command line
-function getCLIParams(): string[] {
-  if (process.argv.length <= 3) {
-    console.error("Expected at least two argument!");
-    process.exit(1);
-  }
-
-  // required params
-  const tokenId = process.env.npm_config_burntpix_id;
-  const gasPrice = process.env.npm_config_gas_price;
-
-  // optional params
-  let numberOfTx = process.env.npm_config_tx_count;
-  let iterations = process.env.npm_config_iterations;
-
-  if (tokenId == undefined || gasPrice == undefined) {
-    console.error(
-      `❌ Invalid parameters provided \n - burntpix-id=${tokenId} \n - tx-count=${numberOfTx}`
-    );
-    return [];
-  }
-
-  // TODO: fallback to default gas price of the network if param not provided
-  // if (gasPrice == undefined) {
-  //   const networkGas = await provider.getFeeData()
-  //   const gasPriceResult = networkGas.gasPrice;
-
-  //   if (gasPriceResult == null) {
-  //     throw new Error("Could not fetch default gas price from the network. Please provide a `--gas-price` flag")
-  //   }
-
-  //   console.log("result: ", gasPriceResult)
-  //   throw new Error("aborting script...")
-  //   return []
-  // }
-
-  if (numberOfTx == undefined) {
-    numberOfTx = "100";
-  }
-
-  if (iterations == undefined) {
-    iterations = "1000";
-  }
-
-  if (parseInt(iterations) > 5000) {
-    console.error(
-      `❌ Invalid \`--iterations\` flag value. Max allowed = 5000, provided: ${iterations}`
-    );
-    return [];
-  }
-
-  if (tokenId.length !== 66) {
-    console.error(
-      "❌ Invalid parameter `burntpix-id` provided: must be a 32 bytes long tokenId identifier (64 characters prefixed with 0x)"
-    );
-    return [];
-  }
-
-  return [tokenId, numberOfTx, gasPrice, iterations];
-}
 
 // Function to display header and table
 const displayHeader = (
@@ -175,9 +105,10 @@ const displayTable = (transactionsData: any[]) => {
 };
 
 const main = async () => {
-  const cliParams = await getCLIParams();
-
+  // TODO: use process.env.exit for cleaner stop
+  const cliParams = getCLIParams();
   if (cliParams.length == 0) return;
+
   const [tokenId, numberOfTx, gasPrice, iterations] = cliParams;
 
   const balance = await provider.getBalance(signer.address);
@@ -241,6 +172,7 @@ const main = async () => {
     iterations,
     balance
   );
+  isRefining = true;
   startSpinner();
 
   for (let i = 0; i < parseInt(numberOfTx, 10); i++) {
@@ -266,6 +198,7 @@ const main = async () => {
         }
       );
     } catch (error) {
+      isRefining = false;
       stopSpinner();
       console.error("Could not refine tx. See error below:");
 
@@ -322,6 +255,7 @@ const main = async () => {
   }
 
   // Stop the spinner when done
+  isRefining = false;
   stopSpinner();
 
   // print summary
