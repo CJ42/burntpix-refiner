@@ -56,6 +56,11 @@ npm run refine --burntpix-id=[burnt pix ID] --gas-price=0.5
       See the Solidity code of `fractal.sol` or in `registry.sol` contract.
       https://explorer.execution.mainnet.lukso.network/address/0x3983151E0442906000DAb83c8b1cF3f2D2535F82?tab=contract_code
 - [ ] add in refining summary total number of LYX spent by refiner wallet
+- [ ] Allow to pass an array of refiner address in the `.env` file and select which one you want with index on a flag `--refiner=1`
+- [ ] It would also be good to have the timestamp of each transaction, as well as an average of the duration between each transaction, that would allow us to know if our fees are too low, or if we are pushing the iterations too hard 😉
+- [ ] In the table summary, add the total LYX spent in gas (sum of all the gas cost of each iteration)
+- [ ] Don't make the script crash necessarely if the gas price provided is too low. Instead, make it wait and retry as many times as possible until the gas price fetched is good (make it maybe wait for few minutes / seconds, fetching the gas price regularly and max fee and display it)
+- [ ] Improve the code to not have to do `console.clear()`, so that you can scroll up easily in the console.
 
 **Later:**
 
@@ -74,3 +79,4 @@ npm run refine --burntpix-id=[burnt pix ID] --gas-price=0.5
 - [ ] Save refining tx in a JSON file (or a Markdown table)
 - [ ] Add iteration goals
 - [ ] Add estimator of refining cost to reach a specific number of iterations or a specific number of gas consumed
+- [ ] Program the refining script so that if a tx does not fit in a block (because of the high gas it uses), send back a replacement tx with less iterations and less gas used to try to fit in the space left of another block.
